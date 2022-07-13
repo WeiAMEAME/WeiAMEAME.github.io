@@ -159,7 +159,7 @@
       <header class="post-header">
         <h2 class="post-title" itemprop="name headline">
           
-            <a href="/2022/07/06/Transactional%E6%B3%A8%E8%A7%A3%E8%AF%A6%E8%A7%A3/" class="post-title-link" itemprop="url">Transactional注解详解</a>
+            <a href="/2022/07/06/Transactional%E6%B3%A8%E8%A7%A3%E8%AF%A6%E8%A7%A3/" class="post-title-link" itemprop="url">记一次Transactional注解报错</a>
         </h2>
 
         <div class="post-meta">
@@ -171,6 +171,13 @@
 
               <time title="Created: 2022-07-06 22:23:13" itemprop="dateCreated datePublished" datetime="2022-07-06T22:23:13+08:00">2022-07-06</time>
             </span>
+              <span class="post-meta-item">
+                <span class="post-meta-item-icon">
+                  <i class="far fa-calendar-check"></i>
+                </span>
+                <span class="post-meta-item-text">Edited on</span>
+                <time title="Modified: 2022-07-13 23:44:25" itemprop="dateModified" datetime="2022-07-13T23:44:25+08:00">2022-07-13</time>
+              </span>
 
           
 
@@ -183,7 +190,23 @@
     <div class="post-body" itemprop="articleBody">
 
       
-          
+          <p>今天在调试项目的时候遇到了一个@Transactional注解的报错问题，项目的代码大致可以抽象为以下代码:</p>
+<p>Controller层</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">@RestController</span></span><br><span class="line"><span class="keyword">public</span> <span class="keyword">class</span> <span class="title class_">TransController</span> &#123;</span><br><span class="line"></span><br><span class="line">    <span class="meta">@Autowired</span></span><br><span class="line">    ServiceA serviceA;</span><br><span class="line"></span><br><span class="line">    <span class="meta">@Autowired</span></span><br><span class="line">    PersonMapper personMapper;</span><br><span class="line"></span><br><span class="line">    <span class="meta">@GetMapping(&quot;/test&quot;)</span></span><br><span class="line">    <span class="keyword">public</span> String <span class="title function_">test</span><span class="params">()</span>&#123;</span><br><span class="line">        serviceA.helloA();</span><br><span class="line"></span><br><span class="line">        <span class="keyword">return</span> personMapper.getPerson(<span class="number">1</span>).toString();</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+
+
+
+
+<p>Service层存在两个Service</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">@Service</span></span><br><span class="line"><span class="keyword">public</span> <span class="keyword">class</span> <span class="title class_">ServiceB</span> &#123;</span><br><span class="line"></span><br><span class="line">    <span class="meta">@Transactional</span></span><br><span class="line">    <span class="keyword">public</span> <span class="keyword">void</span> <span class="title function_">helloB</span><span class="params">()</span> <span class="keyword">throws</span> NullPointerException&#123;</span><br><span class="line">        System.out.println(<span class="string">&quot;hello from B&quot;</span>);</span><br><span class="line">        <span class="type">Object</span> <span class="variable">a</span> <span class="operator">=</span> <span class="literal">null</span>;</span><br><span class="line">        a.hashCode();</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"></span><br><span class="line"><span class="meta">@Service</span></span><br><span class="line"><span class="keyword">public</span> <span class="keyword">class</span> <span class="title class_">ServiceA</span> &#123;</span><br><span class="line"></span><br><span class="line">    <span class="meta">@Autowired</span></span><br><span class="line">    <span class="keyword">public</span> ServiceB b;</span><br><span class="line"></span><br><span class="line">    <span class="meta">@Transactional</span></span><br><span class="line">    <span class="keyword">public</span> <span class="keyword">void</span> <span class="title function_">helloA</span><span class="params">()</span>&#123;</span><br><span class="line">        System.out.println(<span class="string">&quot;hello from A&quot;</span>);</span><br><span class="line">        <span class="keyword">try</span> &#123;</span><br><span class="line">            b.helloB();</span><br><span class="line">        &#125;<span class="keyword">catch</span> (RuntimeException e)&#123;</span><br><span class="line">            e.printStackTrace();</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">&#125;</span><br><span class="line"></span><br></pre></td></tr></table></figure>
+
+
+
+<p>ServiceA调用ServiceB的时候对异常进行了捕获，这样内层的ServiceB的Transactional注解标注B事务是需要回滚的，默认的传播策略为Required，也就是两个事务合并为了一个事务，内层事务回滚，而外层包掉了这个异常，外层不回滚，导致这个事务的全局回滚标签与事务内部回滚标签不一致，从而引发了异常</p>
+<p>异常信息如下：</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">org.springframework.transaction.UnexpectedRollbackException: Transaction rolled back because it has been marked as rollback-only</span><br><span class="line">	at org.springframework.transaction.support.AbstractPlatformTransactionManager.processRollback(AbstractPlatformTransactionManager.java:<span class="number">870</span>) ~[spring-tx-<span class="number">5.3</span><span class="number">.21</span>.jar:<span class="number">5.3</span><span class="number">.21</span>]</span><br><span class="line">	.....</span><br></pre></td></tr></table></figure>
+
       
     </div>
 
@@ -672,7 +695,7 @@
         </a>
       </div>
       <div class="site-state-item site-state-tags">
-        <span class="site-state-item-count">1</span>
+        <span class="site-state-item-count">2</span>
         <span class="site-state-item-name">tags</span>
       </div>
   </nav>
